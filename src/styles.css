@@ -89,8 +89,8 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .topBar p {
@@ -140,7 +140,7 @@ select {
 .summary {
   background: #111;
   color: #fff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .sticky {
@@ -237,7 +237,7 @@ select {
   justify-content: center;
   align-items: center;
   gap: 4px;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .toggles button {
@@ -363,8 +363,8 @@ h2 {
   }
 
   .imageWrap {
-    width: min(100%, calc(100vh - 285px));
-    max-width: 700px;
+    width: min(100%, calc(100vh - 235px));
+    max-width: 760px;
   }
 }
 
@@ -402,8 +402,8 @@ h2 {
   grid-template-columns: auto auto minmax(86px, 1fr) 64px 82px 72px;
   gap: 4px;
   align-items: center;
-  margin-top: 5px;
-  padding: 5px;
+  margin-top: 4px;
+  padding: 4px;
   background: #fff;
   border: 2px solid #111;
   border-radius: 8px;
