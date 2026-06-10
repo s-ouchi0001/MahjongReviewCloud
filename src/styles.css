@@ -215,6 +215,11 @@ select {
   background: #e11d48;
 }
 
+.box.muted {
+  background: rgba(22, 163, 74, 0.18);
+  border-color: rgba(22, 163, 74, 0.45);
+}
+
 .box.focused {
   border-color: #facc15;
   border-width: 2px;
@@ -228,24 +233,34 @@ select {
 
 .toggles {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 6px;
+  align-items: center;
+  gap: 5px;
   margin-top: 6px;
+}
+
+.toggles button {
+  min-height: 42px;
+  padding: 6px 9px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .toggles label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: #fff;
   border: 2px solid #111;
   border-radius: 8px;
   padding: 5px 7px;
+  white-space: nowrap;
 }
 
 .toggles input {
   width: auto;
+  margin: 0;
 }
 
 .toggles button.active {

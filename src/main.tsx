@@ -342,7 +342,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
                   return (
                     <div
                       key={detection.id}
-                      className={`box ${detection.status} ${focusedId === detection.id ? 'focused' : ''}`}
+                      className={`box ${detection.status} ${detection.status !== 'pending' && !showConfirmedNumbers ? 'muted' : ''} ${focusedId === detection.id ? 'focused' : ''}`}
                       style={{
                         left: `${rect.x * 100}%`,
                         top: `${(1 - rect.y - rect.h) * 100}%`,
@@ -360,11 +360,11 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           ) : <div className="empty">画像なし</div>}
         </div>
         <div className="toggles">
-          <button className={filterMode === 'all' ? 'active' : ''} onClick={() => setFilterMode('all')}>全て表示</button>
-          <button className={filterMode === 'pending' ? 'active' : ''} onClick={() => setFilterMode('pending')}>未確認のみ</button>
-          <button className={filterMode === 'confirmed' ? 'active' : ''} onClick={() => setFilterMode('confirmed')}>確認済みのみ</button>
+          <button className={filterMode === 'all' ? 'active' : ''} onClick={() => setFilterMode('all')}>全て</button>
+          <button className={filterMode === 'pending' ? 'active' : ''} onClick={() => setFilterMode('pending')}>未確認</button>
+          <button className={filterMode === 'confirmed' ? 'active' : ''} onClick={() => setFilterMode('confirmed')}>確認済</button>
           <button className={!showConfirmedNumbers ? 'active' : ''} onClick={() => setShowConfirmedNumbers((value) => !value)}>
-            {showConfirmedNumbers ? '確認済み番号なし' : '確認済み番号あり'}
+            {showConfirmedNumbers ? '番号なし' : '番号あり'}
           </button>
           {[
             ['top_discard', '上河'],
