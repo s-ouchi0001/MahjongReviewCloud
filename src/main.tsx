@@ -218,7 +218,7 @@ function RoundList({ onSelect }: { onSelect: (round: ReviewRound) => void }) {
 function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void }) {
   const [detections, setDetections] = useState<ReviewDetection[]>([]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [hideJudged, setHideJudged] = useState(false);
+  const [filterMode, setFilterMode] = useState<'all' | 'pending' | 'confirmed'>('all');
   const [riverVisibility, setRiverVisibility] = useState<Record<string, boolean>>({
     top_discard: true,
     right_discard: true,
@@ -294,7 +294,8 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
   }
 
   const visibleDetections = detections.filter((detection) => {
-    if (hideJudged && detection.status !== 'pending') return false;
+    if (filterMode === 'pending' && detection.status !== 'pending') return false;
+    if (filterMode === 'confirmed' && detection.status === 'pending') return false;
     if (detection.roi_id.endsWith('_discard') && !riverVisibility[detection.roi_id]) return false;
     return true;
   });
@@ -317,7 +318,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
         </div>
         <div className="imageWrap">
           {imageUrl ? (
-            <div className="imageCanvas" style={guide ? { aspectRatio: `${guide.w} / ${guide.h}` } : undefined}>
+            <div className="imageCanvas">
               <img
                 className="sceneImage"
                 src={imageUrl}
@@ -358,9 +359,9 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           ) : <div className="empty">画像なし</div>}
         </div>
         <div className="toggles">
-          <button onClick={() => setHideJudged((value) => !value)}>
-            {hideJudged ? '確認済みを表示' : '確認済みを非表示'}
-          </button>
+          <button className={filterMode === 'all' ? 'active' : ''} onClick={() => setFilterMode('all')}>全て表示</button>
+          <button className={filterMode === 'pending' ? 'active' : ''} onClick={() => setFilterMode('pending')}>未確認のみ</button>
+          <button className={filterMode === 'confirmed' ? 'active' : ''} onClick={() => setFilterMode('confirmed')}>確認済みのみ</button>
           {[
             ['top_discard', '上河'],
             ['right_discard', '右河'],
@@ -378,8 +379,8 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           ))}
         </div>
       </div>
-      <DetectionList title="未確認" detections={pending} updateDetection={updateDetection} focusDetection={setFocusedId} />
-      {!hideJudged && <DetectionList title="判断済み" detections={judged} updateDetection={updateDetection} focusDetection={setFocusedId} />}
+      {filterMode !== 'confirmed' && <DetectionList title="未確認" detections={pending} updateDetection={updateDetection} focusDetection={setFocusedId} />}
+      {filterMode !== 'pending' && <DetectionList title="確認済み" detections={judged} updateDetection={updateDetection} focusDetection={setFocusedId} />}
     </main>
   );
 }

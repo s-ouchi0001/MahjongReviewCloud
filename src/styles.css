@@ -139,14 +139,17 @@ select {
 }
 
 .sticky {
-  position: static;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: #f4f4f5;
   padding-bottom: 10px;
+  border-bottom: 2px solid #ddd;
 }
 
 .imageWrap {
   position: relative;
-  width: min(960px, 100%);
+  width: min(72vh, 720px, 100%);
   margin: 0 auto;
   line-height: 0;
   background: #111;
@@ -158,6 +161,7 @@ select {
 .imageCanvas {
   position: relative;
   width: 100%;
+  aspect-ratio: 1 / 1;
   line-height: 0;
   overflow: hidden;
   background: #111;
@@ -166,8 +170,8 @@ select {
 .sceneImage {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 68vh;
+  height: 100%;
+  max-height: none;
   object-fit: contain;
   background: #111;
 }
@@ -242,6 +246,11 @@ select {
 
 .toggles input {
   width: auto;
+}
+
+.toggles button.active {
+  background: #facc15;
+  color: #111;
 }
 
 section {
