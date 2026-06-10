@@ -236,14 +236,14 @@ select {
   flex-wrap: nowrap;
   justify-content: center;
   align-items: center;
-  gap: 5px;
-  margin-top: 6px;
+  gap: 4px;
+  margin-top: 5px;
 }
 
 .toggles button {
-  min-height: 42px;
-  padding: 6px 9px;
-  font-size: 14px;
+  min-height: 36px;
+  padding: 5px 8px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -254,7 +254,7 @@ select {
   background: #fff;
   border: 2px solid #111;
   border-radius: 8px;
-  padding: 5px 7px;
+  padding: 4px 6px;
   white-space: nowrap;
 }
 
@@ -340,13 +340,14 @@ h2 {
     height: 100vh;
     overflow: hidden;
     align-content: start;
+    padding-bottom: 6px;
   }
 
   .detailWrap > .sticky {
     grid-column: 1;
     position: sticky;
     top: 0;
-    max-height: 100vh;
+    max-height: calc(100vh - 6px);
     overflow: hidden;
   }
 
@@ -362,7 +363,8 @@ h2 {
   }
 
   .imageWrap {
-    width: min(100%, calc(100vh - 210px));
+    width: min(100%, calc(100vh - 285px));
+    max-width: 700px;
   }
 }
 
@@ -398,10 +400,10 @@ h2 {
 .manualAdd {
   display: grid;
   grid-template-columns: auto auto minmax(86px, 1fr) 64px 82px 72px;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
-  margin-top: 6px;
-  padding: 6px;
+  margin-top: 5px;
+  padding: 5px;
   background: #fff;
   border: 2px solid #111;
   border-radius: 8px;
