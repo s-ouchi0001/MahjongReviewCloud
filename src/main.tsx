@@ -552,6 +552,7 @@ function AdminPage({ onBack }: { onBack: () => void }) {
   const [profiles, setProfiles] = useState<ReviewProfile[]>([]);
   const [assignments, setAssignments] = useState<ReviewAssignment[]>([]);
   const [selectedReviewer, setSelectedReviewer] = useState('');
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'assigned' | 'unassigned'>('all');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -580,6 +581,14 @@ function AdminPage({ onBack }: { onBack: () => void }) {
 
   const reviewers = profiles.filter((profile) => !profile.is_admin);
   const completedRounds = rounds.filter((round) => (round.pending_count ?? 0) === 0).length;
+  const assignedRoundIds = new Set(assignments.map((assignment) => assignment.round_id));
+  const assignedRoundCount = rounds.filter((round) => assignedRoundIds.has(round.id)).length;
+  const filteredRounds = rounds.filter((round) => {
+    const assigned = assignedRoundIds.has(round.id);
+    if (assignmentFilter === 'assigned') return assigned;
+    if (assignmentFilter === 'unassigned') return !assigned;
+    return true;
+  });
 
   function assignedEmails(roundId: string) {
     const ids = assignments.filter((assignment) => assignment.round_id === roundId).map((assignment) => assignment.reviewer_id);
@@ -626,6 +635,8 @@ function AdminPage({ onBack }: { onBack: () => void }) {
       {message && <div className="empty">{message}</div>}
       <section className="adminStats">
         <b>局面 {rounds.length}件</b>
+        <b>割当済 {assignedRoundCount}件</b>
+        <b>未割当 {rounds.length - assignedRoundCount}件</b>
         <b>完了 {completedRounds}件</b>
         <b>作業者 {reviewers.length}人</b>
       </section>
@@ -654,15 +665,26 @@ function AdminPage({ onBack }: { onBack: () => void }) {
                 <option key={profile.user_id} value={profile.user_id}>{profile.email}</option>
               ))}
             </select>
+            <select value={assignmentFilter} onChange={(event) => setAssignmentFilter(event.target.value as 'all' | 'assigned' | 'unassigned')}>
+              <option value="all">全て表示</option>
+              <option value="unassigned">未割当のみ</option>
+              <option value="assigned">割当済みのみ</option>
+            </select>
             <button onClick={loadAdmin}>更新</button>
           </div>
 
           <div className="adminList">
             {loading && <div className="empty">読み込み中...</div>}
-            {!loading && rounds.map((round) => (
+            {!loading && filteredRounds.length === 0 && <div className="empty">対象の確認画像はありません</div>}
+            {!loading && filteredRounds.map((round) => (
               <article className="adminRound" key={round.id}>
                 <div>
-                  <b>{round.round_before}</b>
+                  <div className="adminRoundTitle">
+                    <b>{round.round_before}</b>
+                    <span className={assignedRoundIds.has(round.id) ? 'assignBadge assigned' : 'assignBadge unassigned'}>
+                      {assignedRoundIds.has(round.id) ? '割当済み' : '未割当'}
+                    </span>
+                  </div>
                   <span>{round.result_text}</span>
                   <small>
                     {(round.total_count ?? 0) - (round.pending_count ?? 0)}/{round.total_count ?? 0} 確認済み / {accuracyText(round)}

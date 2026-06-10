@@ -466,7 +466,7 @@ h2 {
 
 .adminStats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   margin: 8px 0;
 }
@@ -524,7 +524,7 @@ h2 {
 
 .assignControls {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 170px auto;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -543,9 +543,39 @@ h2 {
   gap: 8px;
 }
 
+.adminRoundTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.assignBadge {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  border: 2px solid #111;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.assignBadge.assigned {
+  background: #16a34a;
+  color: #fff;
+}
+
+.assignBadge.unassigned {
+  background: #ffd21f;
+  color: #111;
+}
+
 @media (max-width: 900px) {
   .adminStats,
-  .adminGrid {
+  .adminGrid,
+  .assignControls {
     grid-template-columns: 1fr;
   }
 
