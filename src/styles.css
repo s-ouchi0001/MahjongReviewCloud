@@ -152,7 +152,15 @@ select {
   overflow: hidden;
 }
 
-.imageWrap img {
+.imageCanvas {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.imageWrap img,
+.sceneImage {
   display: block;
   width: 100%;
   height: auto;
@@ -198,6 +206,17 @@ select {
 .box.correct span,
 .box.corrected span {
   background: #16a34a;
+}
+
+.box.focused {
+  border-color: #facc15;
+  border-width: 4px;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.35);
+}
+
+.box.focused span {
+  background: #facc15;
+  color: #111;
 }
 
 .toggles {
@@ -252,7 +271,7 @@ h2 {
 
 .actions {
   display: grid;
-  grid-template-columns: 92px minmax(180px, 1fr) 118px;
+  grid-template-columns: 84px 92px minmax(180px, 1fr) 92px 118px;
   gap: 6px;
   align-items: center;
 }
@@ -298,7 +317,15 @@ h2 {
     position: static;
   }
 
-  .imageWrap img {
+  .imageCanvas {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.imageWrap img,
+.sceneImage {
     max-height: none;
   }
 

@@ -10,6 +10,7 @@ type ReviewRound = {
   round_before: string;
   result_text: string;
   image_path: string | null;
+  guide_rect?: unknown;
   total_count: number | null;
   pending_count: number | null;
   correct_count: number | null;
@@ -80,6 +81,35 @@ function rectParts(rect: unknown) {
     w: Number(value.width ?? 0),
     h: Number(value.height ?? 0),
   };
+}
+
+function guideParts(rect: unknown) {
+  const base = rectParts(rect);
+  if (!base.w || !base.h) return null;
+  const padX = Math.max(base.w * 0.06, 0.035);
+  const padY = Math.max(base.h * 0.06, 0.035);
+  const x1 = Math.max(0, base.x - padX);
+  const y1 = Math.max(0, base.y - padY);
+  const x2 = Math.min(1, base.x + base.w + padX);
+  const y2 = Math.min(1, base.y + base.h + padY);
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
+function rectInGuide(rect: { x: number; y: number; w: number; h: number }, guide: { x: number; y: number; w: number; h: number }) {
+  const x1 = Math.max(rect.x, guide.x);
+  const y1 = Math.max(rect.y, guide.y);
+  const x2 = Math.min(rect.x + rect.w, guide.x + guide.w);
+  const y2 = Math.min(rect.y + rect.h, guide.y + guide.h);
+  return {
+    x: (x1 - guide.x) / guide.w,
+    y: (y1 - guide.y) / guide.h,
+    w: Math.max(0, (x2 - x1) / guide.w),
+    h: Math.max(0, (y2 - y1) / guide.h),
+  };
+}
+
+function isIgnored(detection: ReviewDetection) {
+  return detection.corrected_label === 'ignore';
 }
 
 function accuracyText(round: ReviewRound) {
@@ -175,6 +205,8 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
     bottom_discard: true,
     left_discard: true,
   });
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [roundMeta, setRoundMeta] = useState<Partial<ReviewRound> | null>(null);
 
   const stats = useMemo(() => {
     const correct = detections.filter((item) => item.status === 'correct').length;
@@ -190,6 +222,13 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
   }, [detections]);
 
   async function loadDetail() {
+    const { data: meta } = await supabase
+      .from('review_rounds')
+      .select('image_path,guide_rect')
+      .eq('id', round.id)
+      .single();
+    setRoundMeta(meta ?? null);
+
     const { data } = await supabase
       .from('review_detections')
       .select('*')
@@ -198,9 +237,12 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
       .order('detection_index');
     setDetections(data ?? []);
 
-    if (round.image_path) {
-      const signed = await supabase.storage.from('training-images').createSignedUrl(round.image_path, 60 * 60);
+    const imagePath = meta?.image_path ?? round.image_path;
+    if (imagePath) {
+      const signed = await supabase.storage.from('training-images').createSignedUrl(imagePath, 60 * 60);
       setImageUrl(signed.data?.signedUrl ?? null);
+    } else {
+      setImageUrl(null);
     }
   }
 
@@ -238,6 +280,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
   });
   const pending = detections.filter((item) => item.status === 'pending');
   const judged = detections.filter((item) => item.status !== 'pending');
+  const guide = guideParts(roundMeta?.guide_rect ?? round.guide_rect);
 
   return (
     <main className="wrap">
@@ -253,27 +296,45 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           正答率 {stats.accuracy} / 正しい {stats.correct}件 / 修正 {stats.corrected}件 / 未確認 {stats.pending}件
         </div>
         <div className="imageWrap">
-          {imageUrl ? <img src={imageUrl} alt="局面画像" /> : <div className="empty">画像なし</div>}
-          <div className="overlay">
-            {visibleDetections.map((detection, index) => {
-              const rect = rectParts(detection.rect);
-              return (
-                <div
-                  key={detection.id}
-                  className={`box ${detection.status}`}
-                  style={{
-                    left: `${rect.x * 100}%`,
-                    top: `${(1 - rect.y - rect.h) * 100}%`,
-                    width: `${rect.w * 100}%`,
-                    height: `${rect.h * 100}%`,
-                    zIndex: 10000 - index,
-                  }}
-                >
-                  <span>#{detection.detection_index + 1}</span>
-                </div>
-              );
-            })}
-          </div>
+          {imageUrl ? (
+            <div className="imageCanvas" style={guide ? { aspectRatio: `${guide.w} / ${guide.h}` } : undefined}>
+              <img
+                className="sceneImage"
+                src={imageUrl}
+                alt="局面画像"
+                style={guide ? {
+                  position: 'absolute',
+                  width: `${100 / guide.w}%`,
+                  height: `${100 / guide.h}%`,
+                  left: `${-guide.x / guide.w * 100}%`,
+                  top: `${-(1 - guide.y - guide.h) / guide.h * 100}%`,
+                  maxHeight: 'none',
+                } : undefined}
+              />
+              <div className="overlay">
+                {visibleDetections.map((detection, index) => {
+                  const baseRect = rectParts(detection.rect);
+                  const rect = guide ? rectInGuide(baseRect, guide) : baseRect;
+                  if (rect.w <= 0 || rect.h <= 0) return null;
+                  return (
+                    <div
+                      key={detection.id}
+                      className={`box ${detection.status} ${focusedId === detection.id ? 'focused' : ''}`}
+                      style={{
+                        left: `${rect.x * 100}%`,
+                        top: `${(1 - rect.y - rect.h) * 100}%`,
+                        width: `${rect.w * 100}%`,
+                        height: `${rect.h * 100}%`,
+                        zIndex: focusedId === detection.id ? 20000 : 10000 - index,
+                      }}
+                    >
+                      <span>#{detection.detection_index + 1}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : <div className="empty">画像なし</div>}
         </div>
         <div className="toggles">
           <button onClick={() => setHideJudged((value) => !value)}>
@@ -296,8 +357,8 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           ))}
         </div>
       </div>
-      <DetectionList title="未確認" detections={pending} updateDetection={updateDetection} />
-      {!hideJudged && <DetectionList title="判断済み" detections={judged} updateDetection={updateDetection} />}
+      <DetectionList title="未確認" detections={pending} updateDetection={updateDetection} focusDetection={setFocusedId} />
+      {!hideJudged && <DetectionList title="判断済み" detections={judged} updateDetection={updateDetection} focusDetection={setFocusedId} />}
     </main>
   );
 }
@@ -306,10 +367,12 @@ function DetectionList({
   title,
   detections,
   updateDetection,
+  focusDetection,
 }: {
   title: string;
   detections: ReviewDetection[];
   updateDetection: (detection: ReviewDetection, status: 'pending' | 'correct' | 'corrected', correctedLabel: string | null) => void;
+  focusDetection: (id: string) => void;
 }) {
   return (
     <section>
@@ -317,7 +380,7 @@ function DetectionList({
       <div className="detections">
         {detections.length === 0 && <div className="empty">ありません</div>}
         {detections.map((detection) => (
-          <DetectionRow key={detection.id} detection={detection} updateDetection={updateDetection} />
+          <DetectionRow key={detection.id} detection={detection} updateDetection={updateDetection} focusDetection={focusDetection} />
         ))}
       </div>
     </section>
@@ -327,9 +390,11 @@ function DetectionList({
 function DetectionRow({
   detection,
   updateDetection,
+  focusDetection,
 }: {
   detection: ReviewDetection;
   updateDetection: (detection: ReviewDetection, status: 'pending' | 'correct' | 'corrected', correctedLabel: string | null) => void;
+  focusDetection: (id: string) => void;
 }) {
   const [label, setLabel] = useState(normalizeTile(detection.corrected_label ?? detection.label));
   return (
@@ -337,9 +402,10 @@ function DetectionRow({
       <div>
         <b>#{detection.detection_index + 1} {detection.roi_name}</b>
         <span>推論: {detection.label} / 信頼度 {detection.confidence.toFixed(2)}</span>
-        <small>{detection.status === 'pending' ? '未確認' : detection.status === 'correct' ? '正しい' : `修正: ${detection.corrected_label}`}</small>
+        <small>{detection.status === 'pending' ? '未確認' : detection.status === 'correct' ? '正しい' : isIgnored(detection) ? '対象外' : `修正: ${detection.corrected_label}`}</small>
       </div>
       <div className="actions">
+        <button onClick={() => focusDetection(detection.id)}>見る</button>
         <button onClick={() => updateDetection(detection, 'correct', null)}>正しい</button>
         <form
           onSubmit={(event) => {
@@ -354,6 +420,7 @@ function DetectionRow({
           </select>
           <button type="submit">修正</button>
         </form>
+        <button onClick={() => updateDetection(detection, 'corrected', 'ignore')}>対象外</button>
         <button onClick={() => updateDetection(detection, 'pending', null)}>未確認へ戻す</button>
       </div>
     </article>
