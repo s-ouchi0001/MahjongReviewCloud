@@ -1,0 +1,268 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f4f5;
+  color: #111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: 2px solid #111;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+button.secondary,
+.roundItem {
+  background: #fff;
+  color: #111;
+}
+
+.wrap {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  padding: 20px;
+}
+
+.login h1,
+.topBar h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.loginBox {
+  width: min(420px, 92vw);
+  display: grid;
+  gap: 12px;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+label {
+  font-weight: 900;
+}
+
+input,
+select {
+  width: 100%;
+  border: 2px solid #111;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  font-weight: 800;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.topBar p {
+  margin: 4px 0 0;
+  color: #444;
+  font-weight: 800;
+}
+
+.roundList,
+.detections {
+  display: grid;
+  gap: 8px;
+}
+
+.roundItem {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+}
+
+.roundItem b {
+  font-size: 18px;
+}
+
+.roundItem span,
+.roundItem small {
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.roundItem small,
+.det small {
+  color: #555;
+}
+
+.empty,
+.summary {
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-weight: 900;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #f4f4f5;
+  padding-bottom: 12px;
+}
+
+.summary {
+  background: #111;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.imageWrap {
+  position: relative;
+  line-height: 0;
+}
+
+.imageWrap img {
+  width: 100%;
+  max-height: 48vh;
+  object-fit: contain;
+  background: #111;
+  border: 2px solid #111;
+  border-radius: 8px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.box {
+  position: absolute;
+  border: 1.5px solid #e11d48;
+  border-radius: 3px;
+}
+
+.box.correct,
+.box.corrected {
+  border-color: #16a34a;
+  opacity: 0.72;
+}
+
+.box span {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  transform: translateX(-50%);
+  background: #e11d48;
+  color: #fff;
+  border: 1.5px solid #111;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.box.correct span,
+.box.corrected span {
+  background: #16a34a;
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.toggles label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.toggles input {
+  width: auto;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 14px 0 8px;
+}
+
+.det {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(340px, 1.5fr);
+  gap: 10px;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.det.correct,
+.det.corrected {
+  opacity: 0.76;
+}
+
+.det b,
+.det span,
+.det small {
+  display: block;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.actions form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .topBar,
+  .det,
+  .actions,
+  .actions form {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+}
