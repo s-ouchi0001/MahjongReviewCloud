@@ -598,6 +598,29 @@ function AdminPage({ onBack }: { onBack: () => void }) {
     return emails.length ? emails.join(', ') : '未割当';
   }
 
+  function workerStats(profile: ReviewProfile) {
+    const assignedRoundIdsForWorker = new Set(
+      assignments
+        .filter((assignment) => assignment.reviewer_id === profile.user_id)
+        .map((assignment) => assignment.round_id),
+    );
+    const assignedRounds = rounds.filter((round) => assignedRoundIdsForWorker.has(round.id));
+    const completed = assignedRounds.filter((round) => (round.pending_count ?? 0) === 0).length;
+    const totalTiles = assignedRounds.reduce((sum, round) => sum + (round.total_count ?? 0), 0);
+    const pendingTiles = assignedRounds.reduce((sum, round) => sum + (round.pending_count ?? 0), 0);
+    const reviewedTiles = totalTiles - pendingTiles;
+    const progress = totalTiles > 0 ? Math.round((reviewedTiles / totalTiles) * 100) : 0;
+    return {
+      assignedRounds: assignedRounds.length,
+      completed,
+      incomplete: assignedRounds.length - completed,
+      totalTiles,
+      reviewedTiles,
+      pendingTiles,
+      progress,
+    };
+  }
+
   async function assignRound(roundId: string, reviewerId: string) {
     if (!reviewerId) {
       setMessage('割当先ユーザーを選んでください。');
@@ -646,11 +669,22 @@ function AdminPage({ onBack }: { onBack: () => void }) {
           <h2>作業者</h2>
           {reviewers.length === 0 && <p>作業者が未登録です。Supabaseのauth.usersからreview_profilesへ追加してください。</p>}
           {reviewers.map((profile) => {
-            const assigned = assignments.filter((assignment) => assignment.reviewer_id === profile.user_id).length;
+            const stats = workerStats(profile);
             return (
-              <div className="adminRow" key={profile.user_id}>
-                <b>{profile.email}</b>
-                <span>{assigned}件 割当中</span>
+              <div className="adminRow workerProgress" key={profile.user_id}>
+                <div className="workerProgressHead">
+                  <b>{profile.email}</b>
+                  <span>{stats.progress}%</span>
+                </div>
+                <div className="progressBar" aria-label={`作業進捗 ${stats.progress}%`}>
+                  <span style={{ width: `${stats.progress}%` }} />
+                </div>
+                <div className="workerProgressGrid">
+                  <span>割当 {stats.assignedRounds}件</span>
+                  <span>完了 {stats.completed}件</span>
+                  <span>未完了 {stats.incomplete}件</span>
+                  <span>牌 {stats.reviewedTiles}/{stats.totalTiles}</span>
+                </div>
               </div>
             );
           })}
