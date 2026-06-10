@@ -105,6 +105,24 @@ select {
   gap: 8px;
 }
 
+.workSummary {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.workSummary b {
+  background: #111;
+  color: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
 .roundItem {
   display: grid;
   gap: 4px;
@@ -573,6 +591,10 @@ h2 {
 }
 
 @media (max-width: 900px) {
+  .workSummary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .adminStats,
   .adminGrid,
   .assignControls {

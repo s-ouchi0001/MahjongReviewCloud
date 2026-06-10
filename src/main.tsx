@@ -182,23 +182,41 @@ function Login() {
   );
 }
 
-function RoundList({ onSelect, isAdmin, onAdmin }: { onSelect: (round: ReviewRound) => void; isAdmin: boolean; onAdmin: () => void }) {
+function RoundList({ onSelect, isAdmin, onAdmin, userId }: { onSelect: (round: ReviewRound) => void; isAdmin: boolean; onAdmin: () => void; userId: string }) {
   const [rounds, setRounds] = useState<ReviewRound[]>([]);
+  const [userAssignments, setUserAssignments] = useState<ReviewAssignment[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadRounds() {
     setLoading(true);
-    const { data, error } = await supabase
+    const roundResult = await supabase
       .from('review_round_stats')
       .select('*')
       .order('captured_at', { ascending: false });
-    if (!error) setRounds(data ?? []);
+    const assignmentResult = isAdmin
+      ? { data: [], error: null }
+      : await supabase
+        .from('review_assignments')
+        .select('round_id,reviewer_id')
+        .eq('reviewer_id', userId);
+
+    if (!roundResult.error && !assignmentResult.error) {
+      setRounds((roundResult.data ?? []) as ReviewRound[]);
+      setUserAssignments((assignmentResult.data ?? []) as ReviewAssignment[]);
+    }
     setLoading(false);
   }
 
   useEffect(() => {
     loadRounds();
-  }, []);
+  }, [isAdmin, userId]);
+
+  const assignedRoundIds = new Set(userAssignments.map((assignment) => assignment.round_id));
+  const visibleRounds = isAdmin ? rounds : rounds.filter((round) => assignedRoundIds.has(round.id));
+  const completedRounds = visibleRounds.filter((round) => (round.pending_count ?? 0) === 0).length;
+  const totalTiles = visibleRounds.reduce((sum, round) => sum + (round.total_count ?? 0), 0);
+  const pendingTiles = visibleRounds.reduce((sum, round) => sum + (round.pending_count ?? 0), 0);
+  const reviewedTiles = totalTiles - pendingTiles;
 
   return (
     <main className="wrap listWrap">
@@ -212,10 +230,17 @@ function RoundList({ onSelect, isAdmin, onAdmin }: { onSelect: (round: ReviewRou
           <button onClick={() => supabase.auth.signOut()}>ログアウト</button>
         </div>
       </header>
+      <section className="workSummary">
+        <b>{isAdmin ? '全体' : '自分の担当'} {visibleRounds.length}件</b>
+        <b>完了 {completedRounds}件</b>
+        <b>未完了 {visibleRounds.length - completedRounds}件</b>
+        <b>牌 {reviewedTiles}/{totalTiles}</b>
+        <b>残り {pendingTiles}枚</b>
+      </section>
       <div className="roundList">
         {loading && <div className="empty">読み込み中...</div>}
-        {!loading && rounds.length === 0 && <div className="empty">学習データがありません</div>}
-        {rounds.map((round) => (
+        {!loading && visibleRounds.length === 0 && <div className="empty">{isAdmin ? '学習データがありません' : '割り当てられた確認画像がありません'}</div>}
+        {visibleRounds.map((round) => (
           <button key={round.id} className="roundItem" onClick={() => onSelect(round)}>
             <b>{round.round_before}</b>
             <span>{round.result_text}</span>
@@ -776,7 +801,7 @@ function App() {
   if (!session) return <Login />;
   if (showAdmin && isAdmin) return <AdminPage onBack={() => setShowAdmin(false)} />;
   if (selectedRound) return <RoundDetail round={selectedRound} onBack={() => setSelectedRound(null)} />;
-  return <RoundList onSelect={setSelectedRound} isAdmin={isAdmin} onAdmin={() => setShowAdmin(true)} />;
+  return <RoundList onSelect={setSelectedRound} isAdmin={isAdmin} onAdmin={() => setShowAdmin(true)} userId={session.user.id} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);
