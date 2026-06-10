@@ -190,7 +190,7 @@ function RoundList({ onSelect }: { onSelect: (round: ReviewRound) => void }) {
   }, []);
 
   return (
-    <main className="wrap">
+    <main className="wrap listWrap">
       <header className="topBar">
         <div>
           <h1>学習データ確認</h1>
@@ -304,7 +304,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
   const guide = guideParts(roundMeta?.guide_rect ?? round.guide_rect);
 
   return (
-    <main className="wrap">
+    <main className="wrap detailWrap">
       <div className="sticky">
         <header className="topBar">
           <button onClick={onBack}>一覧へ戻る</button>
