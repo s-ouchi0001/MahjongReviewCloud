@@ -228,6 +228,10 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [showConfirmedNumbers, setShowConfirmedNumbers] = useState(true);
   const [roundMeta, setRoundMeta] = useState<Partial<ReviewRound> | null>(null);
+  const [manualPoint, setManualPoint] = useState<{ x: number; y: number } | null>(null);
+  const [manualLabel, setManualLabel] = useState('ignore');
+  const [manualSeat, setManualSeat] = useState('bottom');
+  const [manualArea, setManualArea] = useState('hand');
 
   const stats = useMemo(() => {
     const correct = detections.filter((item) => item.status === 'correct').length;
@@ -304,6 +308,53 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
   const judged = detections.filter((item) => item.status !== 'pending');
   const guide = guideParts(roundMeta?.guide_rect ?? round.guide_rect);
 
+  function chooseManualPoint(event: React.MouseEvent<HTMLDivElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
+    const y = Math.min(1, Math.max(0, 1 - ((event.clientY - bounds.top) / bounds.height)));
+    setManualPoint(guide ? {
+      x: Math.min(1, Math.max(0, guide.x + x * guide.w)),
+      y: Math.min(1, Math.max(0, guide.y + y * guide.h)),
+    } : { x, y });
+  }
+
+  async function addManualDetection() {
+    if (!manualPoint) return;
+    const nextIndex = detections.reduce((max, item) => Math.max(max, item.detection_index), -1) + 1;
+    const roiId = `${manualSeat}_${manualArea}`;
+    const names: Record<string, string> = {
+      top: '上',
+      right: '右',
+      bottom: '下',
+      left: '左',
+      hand: '手牌',
+      meld: '副露',
+      discard: '河',
+    };
+    const rect = [
+      [Math.max(0, manualPoint.x - 0.012), Math.max(0, manualPoint.y - 0.018)],
+      [0.024, 0.036],
+    ];
+    const { error } = await supabase.from('review_detections').insert({
+      round_id: round.id,
+      detection_index: nextIndex,
+      roi_id: roiId,
+      roi_name: `${names[manualSeat]}${names[manualArea]}`,
+      label: manualLabel,
+      confidence: 1,
+      rect,
+      status: manualLabel === 'ignore' ? 'corrected' : 'pending',
+      corrected_label: manualLabel === 'ignore' ? 'ignore' : null,
+      raw_detection: { manual: true },
+    });
+    if (!error) {
+      setManualPoint(null);
+      await loadDetail();
+    } else {
+      alert(`追加できませんでした: ${error.message}`);
+    }
+  }
+
   return (
     <main className="wrap detailWrap">
       <div className="sticky">
@@ -319,7 +370,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
         </div>
         <div className="imageWrap">
           {imageUrl ? (
-            <div className="imageCanvas">
+            <div className="imageCanvas" onClick={chooseManualPoint}>
               <img
                 className="sceneImage"
                 src={imageUrl}
@@ -334,6 +385,15 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
                   objectFit: 'fill',
                 } : undefined}
               />
+              {manualPoint && (
+                <div
+                  className="manualMarker"
+                  style={{
+                    left: `${((guide ? (manualPoint.x - guide.x) / guide.w : manualPoint.x) * 100)}%`,
+                    top: `${((1 - (guide ? (manualPoint.y - guide.y) / guide.h : manualPoint.y)) * 100)}%`,
+                  }}
+                />
+              )}
               <div className="overlay">
                 {visibleDetections.map((detection, index) => {
                   const baseRect = rectParts(detection.rect);
@@ -358,6 +418,26 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
               </div>
             </div>
           ) : <div className="empty">画像なし</div>}
+        </div>
+        <div className="manualAdd">
+          <b>未検出追加</b>
+          <span>{manualPoint ? '位置選択済み' : '画像をクリック'}</span>
+          <select value={manualLabel} onChange={(event) => setManualLabel(event.target.value)}>
+            <option value="ignore">対象外</option>
+            {tileOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+          <select value={manualSeat} onChange={(event) => setManualSeat(event.target.value)}>
+            <option value="top">上</option>
+            <option value="right">右</option>
+            <option value="bottom">下</option>
+            <option value="left">左</option>
+          </select>
+          <select value={manualArea} onChange={(event) => setManualArea(event.target.value)}>
+            <option value="hand">手牌</option>
+            <option value="meld">副露</option>
+            <option value="discard">河</option>
+          </select>
+          <button disabled={!manualPoint} onClick={addManualDetection}>{manualPoint ? '追加' : '未選択'}</button>
         </div>
         <div className="toggles">
           <button className={filterMode === 'all' ? 'active' : ''} onClick={() => setFilterMode('all')}>全て</button>

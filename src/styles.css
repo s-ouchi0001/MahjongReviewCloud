@@ -394,3 +394,56 @@ h2 {
     grid-template-columns: 1fr auto;
   }
 }
+
+.manualAdd {
+  display: grid;
+  grid-template-columns: auto auto minmax(86px, 1fr) 64px 82px 72px;
+  gap: 5px;
+  align-items: center;
+  margin-top: 6px;
+  padding: 6px;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  line-height: 1.1;
+}
+
+.manualAdd b,
+.manualAdd span {
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.manualAdd span {
+  color: #555;
+  font-size: 12px;
+}
+
+.manualAdd select,
+.manualAdd button {
+  min-height: 34px;
+  padding: 5px;
+  font-size: 13px;
+}
+
+.manualAdd button:disabled {
+  opacity: 0.5;
+}
+
+.manualMarker {
+  position: absolute;
+  z-index: 30000;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #facc15;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.35);
+  pointer-events: none;
+}
+
+@media (max-width: 899px) {
+  .manualAdd {
+    grid-template-columns: 1fr 1fr;
+  }
+}
