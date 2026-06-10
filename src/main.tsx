@@ -66,6 +66,9 @@ function normalizeTile(label: string) {
 }
 
 function rectParts(rect: unknown) {
+  if (!rect) {
+    return { x: 0, y: 0, w: 0, h: 0 };
+  }
   if (Array.isArray(rect) && Array.isArray(rect[0]) && Array.isArray(rect[1])) {
     return {
       x: Number(rect[0][0]),
