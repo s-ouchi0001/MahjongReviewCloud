@@ -139,12 +139,9 @@ select {
 }
 
 .sticky {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  position: static;
   background: #f4f4f5;
   padding-bottom: 10px;
-  border-bottom: 2px solid #ddd;
 }
 
 .imageWrap {
@@ -328,5 +325,45 @@ h2 {
 
   .actions form {
     grid-template-columns: 1fr auto;
+  }
+}
+
+
+@media (min-width: 900px) {
+  .wrap {
+    display: grid;
+    grid-template-columns: minmax(460px, 48vw) minmax(520px, 1fr);
+    gap: 12px;
+    align-items: start;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .wrap > .sticky {
+    grid-column: 1;
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+
+  .wrap > section {
+    grid-column: 2;
+    max-width: none;
+    margin: 0 0 12px;
+  }
+
+  .imageWrap {
+    width: min(48vw, calc(100vh - 150px));
+  }
+
+  .imageCanvas {
+    aspect-ratio: 1 / 1;
+  }
+
+  .sceneImage {
+    height: 100%;
+    max-height: none;
   }
 }
