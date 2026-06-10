@@ -449,3 +449,115 @@ h2 {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.adminWrap {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.adminStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.adminStats b,
+.adminCard,
+.adminRound {
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+}
+
+.adminStats b {
+  padding: 12px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.adminGrid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.adminCard {
+  padding: 12px;
+}
+
+.adminCard h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.adminRow,
+.adminRound {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+}
+
+.adminRow {
+  border-top: 2px solid #111;
+}
+
+.adminRow span,
+.adminRound span,
+.adminRound small {
+  display: block;
+  color: #555;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.assignControls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.adminList {
+  display: grid;
+  gap: 8px;
+}
+
+.adminRound {
+  align-items: center;
+}
+
+.adminRoundActions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .adminStats,
+  .adminGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .adminRound {
+    display: grid;
+  }
+
+  .adminRoundActions {
+    justify-content: stretch;
+  }
+
+  .adminRoundActions button {
+    flex: 1;
+  }
+}

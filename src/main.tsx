@@ -17,6 +17,17 @@ type ReviewRound = {
   corrected_count: number | null;
 };
 
+type ReviewProfile = {
+  user_id: string;
+  email: string;
+  is_admin: boolean;
+};
+
+type ReviewAssignment = {
+  round_id: string;
+  reviewer_id: string;
+};
+
 type ReviewDetection = {
   id: string;
   detection_index: number;
@@ -171,7 +182,7 @@ function Login() {
   );
 }
 
-function RoundList({ onSelect }: { onSelect: (round: ReviewRound) => void }) {
+function RoundList({ onSelect, isAdmin, onAdmin }: { onSelect: (round: ReviewRound) => void; isAdmin: boolean; onAdmin: () => void }) {
   const [rounds, setRounds] = useState<ReviewRound[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -196,7 +207,10 @@ function RoundList({ onSelect }: { onSelect: (round: ReviewRound) => void }) {
           <h1>学習データ確認</h1>
           <p>未確認の局面から順に確認してください。</p>
         </div>
-        <button onClick={() => supabase.auth.signOut()}>ログアウト</button>
+        <div className="topActions">
+          {isAdmin && <button onClick={onAdmin}>管理画面</button>}
+          <button onClick={() => supabase.auth.signOut()}>ログアウト</button>
+        </div>
       </header>
       <div className="roundList">
         {loading && <div className="empty">読み込み中...</div>}
@@ -533,22 +547,180 @@ function DetectionRow({
   );
 }
 
+function AdminPage({ onBack }: { onBack: () => void }) {
+  const [rounds, setRounds] = useState<ReviewRound[]>([]);
+  const [profiles, setProfiles] = useState<ReviewProfile[]>([]);
+  const [assignments, setAssignments] = useState<ReviewAssignment[]>([]);
+  const [selectedReviewer, setSelectedReviewer] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  async function loadAdmin() {
+    setLoading(true);
+    const [roundResult, profileResult, assignmentResult] = await Promise.all([
+      supabase.from('review_round_stats').select('*').order('captured_at', { ascending: false }),
+      supabase.from('review_profiles').select('user_id,email,is_admin').order('email', { ascending: true }),
+      supabase.from('review_assignments').select('round_id,reviewer_id'),
+    ]);
+
+    if (roundResult.error || profileResult.error || assignmentResult.error) {
+      setMessage(`読み込み失敗: ${roundResult.error?.message ?? profileResult.error?.message ?? assignmentResult.error?.message}`);
+    } else {
+      setMessage('');
+      setRounds((roundResult.data ?? []) as ReviewRound[]);
+      setProfiles((profileResult.data ?? []) as ReviewProfile[]);
+      setAssignments((assignmentResult.data ?? []) as ReviewAssignment[]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadAdmin();
+  }, []);
+
+  const reviewers = profiles.filter((profile) => !profile.is_admin);
+  const completedRounds = rounds.filter((round) => (round.pending_count ?? 0) === 0).length;
+
+  function assignedEmails(roundId: string) {
+    const ids = assignments.filter((assignment) => assignment.round_id === roundId).map((assignment) => assignment.reviewer_id);
+    const emails = ids
+      .map((id) => profiles.find((profile) => profile.user_id === id)?.email)
+      .filter(Boolean);
+    return emails.length ? emails.join(', ') : '未割当';
+  }
+
+  async function assignRound(roundId: string, reviewerId: string) {
+    if (!reviewerId) {
+      setMessage('割当先ユーザーを選んでください。');
+      return;
+    }
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from('review_assignments').upsert({
+      round_id: roundId,
+      reviewer_id: reviewerId,
+      assigned_by: userData.user?.id ?? null,
+    });
+    setMessage(error ? `割当失敗: ${error.message}` : '割当しました。');
+    if (!error) await loadAdmin();
+  }
+
+  async function clearAssignments(roundId: string) {
+    const { error } = await supabase.from('review_assignments').delete().eq('round_id', roundId);
+    setMessage(error ? `解除失敗: ${error.message}` : '割当を解除しました。');
+    if (!error) await loadAdmin();
+  }
+
+  return (
+    <main className="wrap adminWrap">
+      <header className="topBar">
+        <div>
+          <h1>管理画面</h1>
+          <p>確認画像の割当と作業状況を確認できます。</p>
+        </div>
+        <div className="topActions">
+          <button className="secondary" onClick={onBack}>一覧へ戻る</button>
+          <button onClick={() => supabase.auth.signOut()}>ログアウト</button>
+        </div>
+      </header>
+
+      {message && <div className="empty">{message}</div>}
+      <section className="adminStats">
+        <b>局面 {rounds.length}件</b>
+        <b>完了 {completedRounds}件</b>
+        <b>作業者 {reviewers.length}人</b>
+      </section>
+
+      <section className="adminGrid">
+        <div className="adminCard">
+          <h2>作業者</h2>
+          {reviewers.length === 0 && <p>作業者が未登録です。Supabaseのauth.usersからreview_profilesへ追加してください。</p>}
+          {reviewers.map((profile) => {
+            const assigned = assignments.filter((assignment) => assignment.reviewer_id === profile.user_id).length;
+            return (
+              <div className="adminRow" key={profile.user_id}>
+                <b>{profile.email}</b>
+                <span>{assigned}件 割当中</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="adminCard">
+          <h2>確認画像の割当</h2>
+          <div className="assignControls">
+            <select value={selectedReviewer} onChange={(event) => setSelectedReviewer(event.target.value)}>
+              <option value="">割当先を選択</option>
+              {reviewers.map((profile) => (
+                <option key={profile.user_id} value={profile.user_id}>{profile.email}</option>
+              ))}
+            </select>
+            <button onClick={loadAdmin}>更新</button>
+          </div>
+
+          <div className="adminList">
+            {loading && <div className="empty">読み込み中...</div>}
+            {!loading && rounds.map((round) => (
+              <article className="adminRound" key={round.id}>
+                <div>
+                  <b>{round.round_before}</b>
+                  <span>{round.result_text}</span>
+                  <small>
+                    {(round.total_count ?? 0) - (round.pending_count ?? 0)}/{round.total_count ?? 0} 確認済み / {accuracyText(round)}
+                  </small>
+                  <small>割当: {assignedEmails(round.id)}</small>
+                </div>
+                <div className="adminRoundActions">
+                  <button onClick={() => assignRound(round.id, selectedReviewer)}>割当</button>
+                  <button className="secondary" onClick={() => clearAssignments(round.id)}>解除</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [selectedRound, setSelectedRound] = useState<ReviewRound | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  async function loadProfile(nextSession: Session | null) {
+    if (!nextSession?.user) {
+      setIsAdmin(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('review_profiles')
+      .select('is_admin')
+      .eq('user_id', nextSession.user.id)
+      .maybeSingle();
+    setIsAdmin(data?.is_admin === true);
+  }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      loadProfile(data.session);
+    });
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      if (!nextSession) setSelectedRound(null);
+      loadProfile(nextSession);
+      if (!nextSession) {
+        setSelectedRound(null);
+        setShowAdmin(false);
+      }
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
   if (!session) return <Login />;
+  if (showAdmin && isAdmin) return <AdminPage onBack={() => setShowAdmin(false)} />;
   if (selectedRound) return <RoundDetail round={selectedRound} onBack={() => setSelectedRound(null)} />;
-  return <RoundList onSelect={setSelectedRound} />;
+  return <RoundList onSelect={setSelectedRound} isAdmin={isAdmin} onAdmin={() => setShowAdmin(true)} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);
