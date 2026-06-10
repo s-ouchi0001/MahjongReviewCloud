@@ -317,11 +317,20 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
         </div>
         <div className="imageWrap">
           {imageUrl ? (
-            <div className="imageCanvas">
+            <div className="imageCanvas" style={guide ? { aspectRatio: `${guide.w} / ${guide.h}` } : undefined}>
               <img
                 className="sceneImage"
                 src={imageUrl}
                 alt="局面画像"
+                style={guide ? {
+                  position: 'absolute',
+                  width: `${100 / guide.w}%`,
+                  height: `${100 / guide.h}%`,
+                  left: `${-guide.x / guide.w * 100}%`,
+                  top: `${-(1 - guide.y - guide.h) / guide.h * 100}%`,
+                  maxHeight: 'none',
+                  objectFit: 'fill',
+                } : undefined}
               />
               <div className="overlay">
                 {visibleDetections.map((detection, index) => {
