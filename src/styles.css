@@ -32,9 +32,8 @@ button.secondary,
 }
 
 .wrap {
-  width: 100%;
-  max-width: none;
-  margin: 0;
+  width: min(1280px, 100%);
+  margin: 0 auto;
   padding: 12px;
 }
 
@@ -89,7 +88,13 @@ select {
   font-weight: 800;
 }
 
-.roundList,
+.roundList {
+  display: grid;
+  gap: 8px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
 .detections {
   display: grid;
   gap: 8px;
@@ -134,17 +139,15 @@ select {
 }
 
 .sticky {
-  position: sticky;
-  top: 0;
-  align-self: start;
-  z-index: 20;
+  position: static;
   background: #f4f4f5;
   padding-bottom: 10px;
 }
 
 .imageWrap {
   position: relative;
-  width: 100%;
+  width: min(960px, 100%);
+  margin: 0 auto;
   line-height: 0;
   background: #111;
   border: 2px solid #111;
@@ -159,12 +162,11 @@ select {
   overflow: hidden;
 }
 
-.imageWrap img,
 .sceneImage {
   display: block;
   width: 100%;
   height: auto;
-  max-height: calc(100vh - 190px);
+  max-height: 68vh;
   object-fit: contain;
   background: #111;
 }
@@ -219,20 +221,10 @@ select {
   color: #111;
 }
 
-.box.focused {
-  border-color: #facc15;
-  border-width: 4px;
-  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.35);
-}
-
-.box.focused span {
-  background: #facc15;
-  color: #111;
-}
-
 .toggles {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
   margin-top: 8px;
 }
@@ -249,6 +241,11 @@ select {
 
 .toggles input {
   width: auto;
+}
+
+section {
+  max-width: 1180px;
+  margin: 12px auto 0;
 }
 
 h2 {
@@ -301,42 +298,13 @@ h2 {
   white-space: nowrap;
 }
 
-@media (min-width: 900px) {
-  .wrap {
-    display: grid;
-    grid-template-columns: minmax(520px, 48vw) minmax(520px, 1fr);
-    gap: 12px;
-    align-items: start;
-  }
-
-  .wrap > .sticky {
-    grid-column: 1;
-    grid-row: 1 / span 20;
-  }
-
-  .wrap > section {
-    grid-column: 2;
-  }
-
-  .wrap > section + section {
-    margin-top: 12px;
-  }
-}
-
 @media (max-width: 899px) {
-  .sticky {
-    position: static;
+  .topBar {
+    align-items: stretch;
+    flex-direction: column;
   }
 
-  .imageCanvas {
-  position: relative;
-  width: 100%;
-  line-height: 0;
-  overflow: hidden;
-}
-
-.imageWrap img,
-.sceneImage {
+  .sceneImage {
     max-height: none;
   }
 

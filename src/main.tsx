@@ -84,6 +84,21 @@ function rectParts(rect: unknown) {
 }
 
 function guideParts(rect: unknown) {
+  if (Array.isArray(rect) && Array.isArray(rect[0]) && Array.isArray(rect[1])) {
+    const x = Number(rect[0][0]);
+    const y = Number(rect[0][1]);
+    const w = Number(rect[1][0]);
+    const h = Number(rect[1][1]);
+    if (!w || !h) return null;
+    const padX = Math.max(w * 0.06, 0.035);
+    const padY = Math.max(h * 0.06, 0.035);
+    const x1 = Math.max(0, x - padX);
+    const y1 = Math.max(0, y - padY);
+    const x2 = Math.min(1, x + w + padX);
+    const y2 = Math.min(1, y + h + padY);
+    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  }
+
   const base = rectParts(rect);
   if (!base.w || !base.h) return null;
   const padX = Math.max(base.w * 0.06, 0.035);
@@ -326,19 +341,11 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
         </div>
         <div className="imageWrap">
           {imageUrl ? (
-            <div className="imageCanvas" style={guide ? { aspectRatio: `${guide.w} / ${guide.h}` } : undefined}>
+            <div className="imageCanvas">
               <img
                 className="sceneImage"
                 src={imageUrl}
                 alt="局面画像"
-                style={guide ? {
-                  position: 'absolute',
-                  width: `${100 / guide.w}%`,
-                  height: `${100 / guide.h}%`,
-                  left: `${-guide.x / guide.w * 100}%`,
-                  top: `${-(1 - guide.y - guide.h) / guide.h * 100}%`,
-                  maxHeight: 'none',
-                } : undefined}
               />
               <div className="overlay">
                 {visibleDetections.map((detection, index) => {
