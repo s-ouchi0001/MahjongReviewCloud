@@ -219,6 +219,17 @@ select {
   color: #111;
 }
 
+.box.focused {
+  border-color: #facc15;
+  border-width: 4px;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.35);
+}
+
+.box.focused span {
+  background: #facc15;
+  color: #111;
+}
+
 .toggles {
   display: flex;
   flex-wrap: wrap;
