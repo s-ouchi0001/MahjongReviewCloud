@@ -379,8 +379,8 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           ))}
         </div>
       </div>
-      {filterMode !== 'confirmed' && <DetectionList title="未確認" detections={pending} updateDetection={updateDetection} focusDetection={setFocusedId} />}
-      {filterMode !== 'pending' && <DetectionList title="確認済み" detections={judged} updateDetection={updateDetection} focusDetection={setFocusedId} />}
+      {filterMode !== 'confirmed' && pending.length > 0 && <DetectionList title="未確認" detections={pending} updateDetection={updateDetection} focusDetection={setFocusedId} />}
+      {filterMode !== 'pending' && judged.length > 0 && <DetectionList title="確認済み" detections={judged} updateDetection={updateDetection} focusDetection={setFocusedId} />}
     </main>
   );
 }

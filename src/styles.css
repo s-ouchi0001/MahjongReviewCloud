@@ -324,6 +324,7 @@ h2 {
     align-items: start;
     height: 100vh;
     overflow: hidden;
+    align-content: start;
   }
 
   .detailWrap > .sticky {
@@ -342,7 +343,7 @@ h2 {
   }
 
   .detailWrap > section + section {
-    margin-top: 8px;
+    margin-top: 0;
   }
 
   .imageWrap {
