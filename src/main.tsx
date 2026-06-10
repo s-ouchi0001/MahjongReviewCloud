@@ -226,6 +226,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
     left_discard: true,
   });
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [showConfirmedNumbers, setShowConfirmedNumbers] = useState(true);
   const [roundMeta, setRoundMeta] = useState<Partial<ReviewRound> | null>(null);
 
   const stats = useMemo(() => {
@@ -350,7 +351,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
                         zIndex: focusedId === detection.id ? 20000 : 10000 - index,
                       }}
                     >
-                      <span>#{detection.detection_index + 1}</span>
+                      {(detection.status === 'pending' || showConfirmedNumbers) && <span>#{detection.detection_index + 1}</span>}
                     </div>
                   );
                 })}
@@ -362,6 +363,9 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           <button className={filterMode === 'all' ? 'active' : ''} onClick={() => setFilterMode('all')}>全て表示</button>
           <button className={filterMode === 'pending' ? 'active' : ''} onClick={() => setFilterMode('pending')}>未確認のみ</button>
           <button className={filterMode === 'confirmed' ? 'active' : ''} onClick={() => setFilterMode('confirmed')}>確認済みのみ</button>
+          <button className={!showConfirmedNumbers ? 'active' : ''} onClick={() => setShowConfirmedNumbers((value) => !value)}>
+            {showConfirmedNumbers ? '確認済み番号なし' : '確認済み番号あり'}
+          </button>
           {[
             ['top_discard', '上河'],
             ['right_discard', '右河'],
