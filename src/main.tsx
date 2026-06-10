@@ -127,18 +127,6 @@ function isIgnored(detection: ReviewDetection) {
   return detection.corrected_label === 'ignore';
 }
 
-, guide: { x: number; y: number; w: number; h: number }) {
-  const x1 = Math.max(rect.x, guide.x);
-  const y1 = Math.max(rect.y, guide.y);
-  const x2 = Math.min(rect.x + rect.w, guide.x + guide.w);
-  const y2 = Math.min(rect.y + rect.h, guide.y + guide.h);
-  return {
-    x: (x1 - guide.x) / guide.w,
-    y: (y1 - guide.y) / guide.h,
-    w: Math.max(0, (x2 - x1) / guide.w),
-    h: Math.max(0, (y2 - y1) / guide.h),
-  };
-}
 
 
 function accuracyText(round: ReviewRound) {
