@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 
 async function loadDotEnv() {
-  const envPath = path.resolve('.env');
   let text = '';
   try {
-    text = await readFile(envPath, 'utf8');
+    text = await readFile(path.resolve('.env'), 'utf8');
   } catch {
     return;
   }
@@ -21,9 +21,7 @@ async function loadDotEnv() {
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
-    if (!process.env[key]) {
-      process.env[key] = value;
-    }
+    if (!process.env[key]) process.env[key] = value;
   }
 }
 
@@ -44,49 +42,50 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 function normalizeTile(label) {
   const value = String(label || '').trim().toLowerCase();
   const map = {
-    east: '1z',
-    '東': '1z',
-    south: '2z',
-    '南': '2z',
-    west: '3z',
-    '西': '3z',
-    north: '4z',
-    '北': '4z',
-    white: '5z',
-    '白': '5z',
-    green: '6z',
-    '發': '6z',
-    '発': '6z',
-    red: '7z',
-    '中': '7z',
+    east: '1z', '東': '1z',
+    south: '2z', '南': '2z',
+    west: '3z', '西': '3z',
+    north: '4z', '北': '4z',
+    white: '5z', '白': '5z',
+    green: '6z', '發': '6z', '発': '6z',
+    red: '7z', '中': '7z',
   };
   return map[value] || value;
+}
+
+function storageImagePath(id) {
+  const hash = createHash('sha1').update(id).digest('hex').slice(0, 12);
+  const safe = id.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80);
+  return `rounds/${hash}_${safe || 'round'}.png`;
 }
 
 async function uploadOne(jsonFile) {
   const id = path.basename(jsonFile, '.json');
   const jsonPath = path.join(trainingDir, jsonFile);
-  const pngFile = `${id}.png`;
-  const pngPath = path.join(trainingDir, pngFile);
   const snapshot = JSON.parse(await readFile(jsonPath, 'utf8'));
+  const roundId = snapshot.id || id;
+  const pngFile = snapshot.frameImage || `${id}.png`;
+  const pngPath = path.join(trainingDir, pngFile);
 
   let imagePath = null;
   try {
     const image = await readFile(pngPath);
-    imagePath = `rounds/${id}.png`;
+    const uploadPath = storageImagePath(roundId);
     const { error } = await supabase.storage
       .from('training-images')
-      .upload(imagePath, image, {
+      .upload(uploadPath, image, {
         contentType: 'image/png',
         upsert: true,
       });
     if (error) throw error;
+    imagePath = uploadPath;
   } catch (error) {
-    console.warn(`画像なし: ${pngFile}`);
+    console.warn(`画像アップロード失敗: ${pngFile}`);
+    console.warn(error?.message || error);
   }
 
   const { error: roundError } = await supabase.from('review_rounds').upsert({
-    id: snapshot.id || id,
+    id: roundId,
     captured_at: snapshot.capturedAt,
     event: snapshot.event || 'unknown',
     round_before: snapshot.roundBefore || '',
@@ -110,7 +109,7 @@ async function uploadOne(jsonFile) {
       correctedLabel = normalizeTile(detection.correctedLabel || detection.label);
     }
     return {
-      round_id: snapshot.id || id,
+      round_id: roundId,
       detection_index: index,
       roi_id: detection.roiId || '',
       roi_name: detection.roiName || '',
@@ -129,7 +128,8 @@ async function uploadOne(jsonFile) {
       .upsert(detections, { onConflict: 'round_id,detection_index' });
     if (detectionError) throw detectionError;
   }
-  console.log(`uploaded: ${id} (${detections.length} detections)`);
+
+  console.log(`uploaded: ${roundId} (${detections.length} detections) image=${imagePath ? 'ok' : 'none'}`);
 }
 
 const files = (await readdir(trainingDir)).filter((file) => file.endsWith('.json')).sort();
