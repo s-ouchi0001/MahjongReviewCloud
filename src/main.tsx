@@ -127,19 +127,7 @@ function isIgnored(detection: ReviewDetection) {
   return detection.corrected_label === 'ignore';
 }
 
-function guideParts(rect: unknown) {
-  const base = rectParts(rect);
-  if (!base.w || !base.h) return null;
-  const padX = Math.max(base.w * 0.06, 0.035);
-  const padY = Math.max(base.h * 0.06, 0.035);
-  const x1 = Math.max(0, base.x - padX);
-  const y1 = Math.max(0, base.y - padY);
-  const x2 = Math.min(1, base.x + base.w + padX);
-  const y2 = Math.min(1, base.y + base.h + padY);
-  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
-}
-
-function rectInGuide(rect: { x: number; y: number; w: number; h: number }, guide: { x: number; y: number; w: number; h: number }) {
+, guide: { x: number; y: number; w: number; h: number }) {
   const x1 = Math.max(rect.x, guide.x);
   const y1 = Math.max(rect.y, guide.y);
   const x2 = Math.min(rect.x + rect.w, guide.x + guide.w);
@@ -152,9 +140,6 @@ function rectInGuide(rect: { x: number; y: number; w: number; h: number }, guide
   };
 }
 
-function isIgnored(detection: ReviewDetection) {
-  return detection.corrected_label === 'ignore';
-}
 
 function accuracyText(round: ReviewRound) {
   const correct = round.correct_count ?? 0;
