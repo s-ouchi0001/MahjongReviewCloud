@@ -76,6 +76,28 @@ function normalizeTile(label: string) {
   }
 }
 
+function tileDisplayName(label: string | null | undefined) {
+  const value = normalizeTile(label ?? '');
+  if (value === 'ignore') return '対象外';
+
+  const number = value.slice(0, -1);
+  const suit = value.slice(-1);
+  if (suit === 'm') return number === '0' ? '赤5萬' : `${number}萬`;
+  if (suit === 'p') return number === '0' ? '赤5ピン' : `${number}ピン`;
+  if (suit === 's') return number === '0' ? '赤5ソウ' : `${number}ソウ`;
+
+  const honors: Record<string, string> = {
+    '1z': '東',
+    '2z': '南',
+    '3z': '西',
+    '4z': '北',
+    '5z': '白',
+    '6z': '發',
+    '7z': '中',
+  };
+  return honors[value] ?? (label ?? '');
+}
+
 function rectParts(rect: unknown) {
   if (!rect) {
     return { x: 0, y: 0, w: 0, h: 0 };
@@ -463,7 +485,7 @@ function RoundDetail({ round, onBack }: { round: ReviewRound; onBack: () => void
           <span>{manualPoint ? '位置選択済み' : '画像をクリック'}</span>
           <select value={manualLabel} onChange={(event) => setManualLabel(event.target.value)}>
             <option value="ignore">対象外</option>
-            {tileOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            {tileOptions.map((option) => <option key={option} value={option}>{tileDisplayName(option)}</option>)}
           </select>
           <select value={manualSeat} onChange={(event) => setManualSeat(event.target.value)}>
             <option value="top">上</option>
@@ -546,8 +568,8 @@ function DetectionRow({
     <article className={`det ${detection.status}`}>
       <div>
         <b>#{detection.detection_index + 1} {detection.roi_name}</b>
-        <span>推論: {detection.label} / 信頼度 {detection.confidence.toFixed(2)}</span>
-        <small>{detection.status === 'pending' ? '未確認' : detection.status === 'correct' ? '正しい' : isIgnored(detection) ? '対象外' : `修正: ${detection.corrected_label}`}</small>
+        <span>推論: {tileDisplayName(detection.label)} / 信頼度 {detection.confidence.toFixed(2)}</span>
+        <small>{detection.status === 'pending' ? '未確認' : detection.status === 'correct' ? '正しい' : isIgnored(detection) ? '対象外' : `修正: ${tileDisplayName(detection.corrected_label)}`}</small>
       </div>
       <div className="actions">
         <button onClick={() => focusDetection(detection.id)}>見る</button>
@@ -559,8 +581,9 @@ function DetectionRow({
           }}
         >
           <select value={label} onChange={(event) => setLabel(event.target.value)}>
+            <option value="ignore">対象外</option>
             {tileOptions.map((option) => (
-              <option key={option} value={option}>{option}</option>
+              <option key={option} value={option}>{tileDisplayName(option)}</option>
             ))}
           </select>
           <button type="submit">修正</button>
